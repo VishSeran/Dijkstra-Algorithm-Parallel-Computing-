@@ -3,7 +3,7 @@
 #include <vector>
 #include <climits>
 
-#define INF INT_MAX
+#define INF 999
 // maximum number of vertices
 
 using namespace std;
@@ -62,6 +62,26 @@ void dijkstra()
     }
 }
 
+void display_algo()
+{
+    cout << "Node:\t\t\tCost:\t\t\tPath: ";
+
+    for (int i = 0; i < v; i++)
+    {
+        cout << i << "\t\t\t" << distance_array[i] << "\t\t\t" << " ";
+
+        cout << i << " ";
+        int parent_node = parent[i];
+
+        while (parent_node != src)
+        {
+            cout << " <--" << parent_node << " ";
+            parent_node = parent[parent_node];
+        }
+        cout << endl;
+    }
+}
+
 int main()
 {
     printf("Input the number of vertices: ");
@@ -78,4 +98,8 @@ int main()
 
     printf("\nInput the source node numebr: ");
     cin >> src;
+
+    init_distanceArray();
+    dijkstra();
+    display_algo();
 }
