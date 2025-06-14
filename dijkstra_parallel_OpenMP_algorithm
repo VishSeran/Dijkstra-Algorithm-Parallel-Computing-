@@ -1,1 +1,154 @@
 
+#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <climits>
+#include <omp.h>
+
+
+#define INF 999
+// maximum number of vertices
+
+using namespace std;
+
+int v;
+int src;
+int parent[100];
+int cost[100][100];
+int distance_array[100];
+bool visited[100] = {0};
+
+
+
+
+// initializing the distance for all vertices from the source vertex
+
+void init_distanceArray(){
+
+    int i;
+    
+    omp_set_num_threads(5);
+
+    #pragma omp parallel
+{
+    int thread_num = omp_get_thread_num();
+    #pragma omp for schedule(static)
+    for ( i = 0; i < v; i++)
+    {
+        parent[i] = i;
+        distance_array[i] = INF;
+        printf("parent value: %d and distance_array[%d]: %d calculated by thread: %d\n", parent[i],i,distance_array[i], thread_num);
+    }
+    distance_array[src] = 0;
+}
+
+}
+
+int getCloseNode()
+{
+     int minimumVal = INF;
+        int minimumNode = 0;
+        int chunksize =2;
+
+    
+   
+    // get minimum node is 0th node and all distances are INF
+        int thread_num = omp_get_thread_num();
+        int total_threads = omp_get_num_threads();
+
+        
+        for (int i = 0; i < v; i++) 
+        {
+            
+            
+                if (distance_array[i] < minimumVal && visited[i] == false)
+                {
+                    minimumVal = distance_array[i];
+                    minimumNode = i;
+
+                    printf("process done by thread: %d\n", thread_num);
+                }
+            
+            printf("getCloseNode process done by thread: %d\n", thread_num);
+        
+        printf("total threads: %d",total_threads);
+    }
+
+    return minimumNode;
+}
+
+// initializing the dijkstra algorithm function
+void dijkstra()
+{
+#pragma omp parallel
+
+    {
+    int thread_num = omp_get_thread_num();
+    #pragma omp for schedule(static)
+    for (int i = 0; i < v; i++) 
+
+    {
+        int closet_node = getCloseNode();
+        visited[closet_node] = true;
+
+        #pragma omp  
+        for (int ad = 0; ad < v; ad++)
+        {
+            if ((cost[closet_node][ad] != INF) && (distance_array[ad] > distance_array[closet_node] + cost[closet_node][ad]))
+            {
+                distance_array[ad] = distance_array[closet_node] + cost[closet_node][ad];
+                parent[ad] = closet_node;
+            }
+        }
+        printf("dijkstra process done by thread: %d\n", thread_num);
+    }
+    }
+}
+
+
+void display_algo()
+{
+    cout << "Node:\t\t\tCost:\t\t\tPath: ";
+
+    for (int i = 0; i < v; i++)
+    {
+        cout << i << "\t\t\t" << distance_array[i] << "\t\t\t" << " ";
+
+        cout << i << " ";
+        int parent_node = parent[i];
+
+        while (parent_node != src)
+        {
+            cout << " <--" << parent_node << " ";
+            parent_node = parent[parent_node];
+        }
+        cout << endl;
+    }
+}
+
+int main()
+{
+    omp_set_num_threads(5);
+
+    printf("Input the number of vertices: ");
+    cin >> v;
+
+    for (int i = 0; i < v; i++) {
+        for (int j = 0; j < v; j++) {
+            printf("\nPlease input cost[%d][%d]: ", i, j);
+            cin >> cost[i][j];
+        }
+    }
+
+    printf("\nInput the source node number: ");
+    cin >> src;
+
+    // Now we can safely parallelize
+    init_distanceArray();
+
+    dijkstra();
+
+    display_algo();
+
+    return 0;
+}
